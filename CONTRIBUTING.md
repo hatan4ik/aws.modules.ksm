@@ -22,6 +22,17 @@ terraform init -backend=false -input=false
 make check
 ```
 
+## Integration suites
+
+`tests/integration/` holds a credential-driven suite that applies the module for real and destroys everything afterwards. It is never part of `make check` or the quality pipeline. Run it against your own account before a release that touches resource behaviour:
+
+```bash
+export AWS_PROFILE=<profile> AWS_REGION=<region>
+make integration-smoke   # about 1 minute; the destroyed key stays pending deletion for 7 days
+```
+
+Add a suite when a feature's correctness depends on the KMS API rather than on rendering (for example a custom key store or a new grant constraint). Keep fixtures in `tests/integration/setup`, keep every value derived from the environment or the fixtures, and never reference a real account, principal, or key.
+
 ## The local gate
 
 `make check` is the default target and the same gate CI runs. It stops at the first failing target and must pass before you open a pull request.
@@ -29,13 +40,13 @@ make check
 | Target | What it runs |
 | --- | --- |
 | `make fmt` | `terraform fmt -check -recursive -diff` from the repository root. `make fmt-fix` rewrites the files instead. |
-| `make validate` | `make init` (`terraform init -backend=false`) followed by `terraform validate` in the root, every submodule, and every example directory. |
+| `make validate` | `make init` (`terraform init -backend=false`) followed by `terraform validate` in the root, every submodule, every example directory, and the integration fixture module. |
 | `make lint` | `tflint --init` and then `tflint` in every directory with the root `.tflint.hcl`: documented and typed variables, documented outputs, snake_case naming, no unused declarations, pinned required versions and providers. |
 | `make test` | `terraform test` in the root and in each `modules/*` directory. No credentials are needed. |
 | `make lock` | Refresh the committed root `.terraform.lock.hcl` with hashes for linux and macOS on amd64 and arm64 after changing the provider constraint. CI runs `terraform init` before the docs drift check, so a lock file missing the Linux hash gets rewritten and fails that check. |
 | `make docs` | `terraform-docs -c .terraform-docs.yml` in every directory, regenerating the tables between the `BEGIN_TF_DOCS` and `END_TF_DOCS` markers. Run it after touching any variable or output. |
 | `make docs-check` | The same in `--output-check` mode: fails when a README is out of date. This is the variant `make check` and CI run. |
-| `make security` | `checkov -d . --framework terraform`, and `trivy config --severity HIGH,CRITICAL` when trivy is on the PATH. A skip needs an inline `checkov:skip=` comment with a reason. |
+| `make security` | `checkov -d . --framework terraform`, and `trivy config --severity HIGH,CRITICAL` when trivy is on the PATH. A skip needs an inline `checkov:skip=` comment with a reason; the only excluded path is the integration fixture module, justified in `.checkov.yml` and `trivy.yaml`. |
 | `make check` | `fmt`, `validate`, `lint`, `test`, `docs-check`, `security`, in that order. |
 
 ## Test-first workflow

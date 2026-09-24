@@ -25,6 +25,7 @@ Breaking release. One module call still provisions one key, but the policy is no
 - Outputs `key_usage`, `key_spec`, `policy`, `alias_arns`, `alias_names`, `grant_ids`, `grant_tokens`, `multi_region`, `account_id`, and `partition`.
 - `terraform test` suites for the root and both submodules; five executable examples (`minimal`, `complete`, `multi-region`, `asymmetric-signing`, `multiple-keys`).
 - `docs/DESIGN.md`, `docs/UPGRADE-1.0.md`, submodule READMEs, `CONTRIBUTING.md`, `SECURITY.md`, and `LICENSE`.
+- Credential-driven integration suite `tests/integration/smoke.tftest.hcl` with a disposable fixture module, `make integration-smoke`, a dispatch-only `integration` workflow that assumes a role through GitHub OIDC from the protected `integration` environment, and the IAM trust and permissions documents the role needs.
 - Repository standards: `Makefile` quality gate, pre-commit configuration, tflint and terraform-docs configuration, Dependabot, CODEOWNERS, issue and pull request templates, a CI matrix over every directory with a docs drift check, and the `module-release` workflow.
 
 ### Changed

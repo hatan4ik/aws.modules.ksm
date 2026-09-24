@@ -106,6 +106,13 @@ Not created here
 - Two `check` blocks warn on every plan and apply but never block: `root_administration_disabled` and `rotation_disabled_for_symmetric_key`.
 - The `Name` tag is the first alias in sorted order, or the description when there is no alias, unless you set `Name` yourself. Caller tags are never overridden.
 
+## Testing
+
+Two layers, deliberately separate:
+
+- **Contract tests** (`tests/`, run by `make test` and by CI) use `mock_provider`: no credentials, nothing created, placeholder identifiers such as the AWS documentation account `123456789012`. They pin the module's interface, validations, rendered policy JSON, and defaults, and run identically for everyone.
+- **Integration suite** (`tests/integration/`, run by `make integration-smoke` or the dispatch-only `integration` workflow) applies the module for real in **your** account with **your** credentials and region from the environment, names your own identity as the key's administrator, user, and grantee, and destroys everything afterwards. `smoke` proves that a rotating key with two aliases, a composed policy, and a grant is accepted by the KMS APIs and that the account and partition fallback resolves to your account. The destroyed key stays visible as pending deletion for its 7-day window; see [tests/integration/README.md](tests/integration/README.md) for that, the permissions, and the GitHub environment contract.
+
 ## Design principles
 
 - Single responsibility. `modules/key-policy` owns the shape of a key policy and nothing else: no resources, no provider. `modules/replica` owns a replica key and its aliases. The root owns the primary key, its aliases, and its grants, and composes the renderer.
